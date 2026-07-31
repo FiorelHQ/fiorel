@@ -1,4 +1,12 @@
+import Link from "next/link";
+
 export default function Home() {
+  const metrics = [
+    { label: "Recovery", value: "82%" },
+    { label: "Fitness", value: "Improving" },
+    { label: "Race countdown", value: "85 days" },
+  ];
+
   return (
     <main className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-16">
@@ -16,27 +24,29 @@ export default function Home() {
         </p>
 
         <div className="mt-10 flex flex-wrap gap-4">
-          <button className="rounded-xl bg-[#14B8A6] px-6 py-3 font-semibold text-[#0F172A] transition hover:opacity-90">
+          <Link
+            href="/dashboard"
+            className="rounded-xl bg-[#14B8A6] px-6 py-3 font-semibold text-[#0F172A] transition hover:opacity-90"
+          >
             Enter Fiorel
-          </button>
+          </Link>
 
-          <button className="rounded-xl border border-[#334155] px-6 py-3 font-semibold text-[#F8FAFC] transition hover:bg-[#1E293B]">
+          <Link
+            href="/training"
+            className="rounded-xl border border-[#334155] px-6 py-3 font-semibold text-[#F8FAFC] transition hover:bg-[#1E293B]"
+          >
             View Training
-          </button>
+          </Link>
         </div>
 
         <div className="mt-16 grid gap-4 sm:grid-cols-3">
-          {[
-            ["Recovery", "82%"],
-            ["Fitness", "Improving"],
-            ["Race countdown", "85 days"],
-          ].map(([label, value]) => (
+          {metrics.map((metric) => (
             <article
-              key={label}
+              key={metric.label}
               className="rounded-2xl border border-[#334155] bg-[#1E293B] p-6"
             >
-              <p className="text-sm text-[#94A3B8]">{label}</p>
-              <p className="mt-2 text-2xl font-semibold">{value}</p>
+              <p className="text-sm text-[#94A3B8]">{metric.label}</p>
+              <p className="mt-2 text-2xl font-semibold">{metric.value}</p>
             </article>
           ))}
         </div>
