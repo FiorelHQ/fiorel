@@ -1,7 +1,7 @@
 "use client";
 
+import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase-client";
@@ -10,7 +10,7 @@ type AuthMode = "sign-in" | "sign-up";
 
 export default function AuthPage() {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = createClient();
 
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [firstName, setFirstName] = useState("");
@@ -19,13 +19,6 @@ export default function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
-  function switchMode(nextMode: AuthMode) {
-    setMode(nextMode);
-    setMessage("");
-    setErrorMessage("");
-    setPassword("");
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,11 +29,16 @@ export default function AuthPage() {
 
     try {
       if (mode === "sign-up") {
+        const emailRedirectTo =
+          typeof window !== "undefined"
+            ? `${window.location.origin}/dashboard`
+            : undefined;
+
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
+          email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo,
             data: {
               first_name: firstName.trim(),
             },
@@ -52,20 +50,20 @@ export default function AuthPage() {
         }
 
         if (data.session) {
-          router.replace("/dashboard");
+          router.push("/dashboard");
           router.refresh();
           return;
         }
 
         setMessage(
-          "Account created. Check your email and confirm your address, then return here to sign in.",
+          "Account created. Check your email and confirm your address before signing in.",
         );
         setPassword("");
         return;
       }
 
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email,
         password,
       });
 
@@ -73,7 +71,7 @@ export default function AuthPage() {
         throw error;
       }
 
-      router.replace("/dashboard");
+      router.push("/dashboard");
       router.refresh();
     } catch (error) {
       setErrorMessage(
@@ -86,6 +84,12 @@ export default function AuthPage() {
     }
   }
 
+  function changeMode(nextMode: AuthMode) {
+    setMode(nextMode);
+    setMessage("");
+    setErrorMessage("");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050d18] text-white">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -93,7 +97,7 @@ export default function AuthPage() {
         <div className="absolute bottom-[-18rem] right-[-14rem] h-[40rem] w-[40rem] rounded-full bg-blue-500/10 blur-[150px]" />
       </div>
 
-      <div className="relative z-10 grid min-h-screen lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="relative z-10 grid min-h-screen lg:grid-cols-[0.9fr_1.1fr]">
         <section className="hidden border-r border-white/[0.08] bg-white/[0.015] p-12 lg:flex lg:flex-col lg:justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#14b8a6] text-xl font-black text-[#06101d] shadow-lg shadow-[#14b8a6]/20">
@@ -101,7 +105,7 @@ export default function AuthPage() {
             </div>
 
             <div>
-              <p className="text-lg font-bold tracking-[-0.04em]">
+              <p className="text-lg font-bold">
                 Fiorel<span className="text-[#14b8a6]">.</span>
               </p>
               <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-[#5eead4]">
@@ -112,19 +116,16 @@ export default function AuthPage() {
 
           <div className="max-w-xl">
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-[#14b8a6]">
-              The athlete operating system
+              Your athlete operating system
             </p>
 
             <h1 className="mt-6 text-5xl font-bold leading-[1.02] tracking-[-0.055em]">
-              Every signal.
-              <span className="block text-slate-500">
-                One clear decision.
-              </span>
+              One place to understand your training, recovery and performance.
             </h1>
 
             <p className="mt-7 text-lg leading-8 text-slate-400">
-              Open Mission Control to understand your training, recovery,
-              nutrition and next best action.
+              Sign in to open Mission Control, review today&apos;s guidance and
+              continue building towards your next goal.
             </p>
 
             <div className="mt-10 grid gap-3 sm:grid-cols-3">
@@ -162,34 +163,33 @@ export default function AuthPage() {
                 </p>
               </Link>
 
-              <Link
-                href="/"
-                className="text-sm text-slate-400 transition hover:text-white"
-              >
+              <Link href="/" className="text-sm text-slate-400 hover:text-white">
                 Back home
               </Link>
             </div>
 
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#14b8a6]">
-              {mode === "sign-in" ? "Welcome back" : "Create your account"}
-            </p>
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#14b8a6]">
+                {mode === "sign-in" ? "Welcome back" : "Create your account"}
+              </p>
 
-            <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em]">
-              {mode === "sign-in"
-                ? "Open Mission Control."
-                : "Start training with purpose."}
-            </h2>
+              <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em]">
+                {mode === "sign-in"
+                  ? "Open Mission Control."
+                  : "Start training with purpose."}
+              </h2>
 
-            <p className="mt-4 leading-7 text-slate-400">
-              {mode === "sign-in"
-                ? "Sign in to continue your Fiorel journey."
-                : "Create your account and begin building your athlete profile."}
-            </p>
+              <p className="mt-4 leading-7 text-slate-400">
+                {mode === "sign-in"
+                  ? "Sign in to continue your Fiorel journey."
+                  : "Create your account and begin building your athlete profile."}
+              </p>
+            </div>
 
             <div className="mt-8 grid grid-cols-2 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-1">
               <button
                 type="button"
-                onClick={() => switchMode("sign-in")}
+                onClick={() => changeMode("sign-in")}
                 className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
                   mode === "sign-in"
                     ? "bg-[#14b8a6] text-[#06101d]"
@@ -201,7 +201,7 @@ export default function AuthPage() {
 
               <button
                 type="button"
-                onClick={() => switchMode("sign-up")}
+                onClick={() => changeMode("sign-up")}
                 className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
                   mode === "sign-up"
                     ? "bg-[#14b8a6] text-[#06101d]"
@@ -256,12 +256,20 @@ export default function AuthPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="text-sm font-semibold text-slate-300"
-                >
-                  Password
-                </label>
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-semibold text-slate-300"
+                  >
+                    Password
+                  </label>
+
+                  {mode === "sign-in" && (
+                    <span className="text-xs text-slate-600">
+                      Reset coming next
+                    </span>
+                  )}
+                </div>
 
                 <input
                   id="password"
@@ -279,7 +287,7 @@ export default function AuthPage() {
               </div>
 
               {errorMessage && (
-                <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm leading-6 text-rose-200">
+                <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
                   {errorMessage}
                 </div>
               )}
